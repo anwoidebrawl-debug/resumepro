@@ -6,11 +6,16 @@ const openai = new OpenAI({
 });
 
 export async function POST(request: NextRequest) {
+  let currentHeadline = '';
+  let currentAbout = '';
+  let targetRole = '';
+  
   try {
     const body = await request.json().catch(() => ({}));
-    const { currentHeadline, currentAbout, targetRole } = body;
+    currentHeadline = body.currentHeadline || '';
+    currentAbout = body.currentAbout || '';
+    targetRole = body.targetRole || '';
 
-    // Check if OpenAI is configured
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === '') {
       return NextResponse.json({
         optimization: {
@@ -32,37 +37,19 @@ Currently seeking opportunities to build performant, user-centric applications.`
       });
     }
 
-    const prompt = `Optimize this LinkedIn profile. Respond ONLY with valid JSON:
-
-{
-  "headline": "optimized headline under 220 chars",
-  "about_section": "optimized about section with hook, achievements, skills, CTA",
-  "suggested_skills": ["skill1", "skill2", ...],
-  "improvements": ["improvement1", "improvement2", ...]
-}
-
-${currentHeadline ? `Current Headline: ${currentHeadline}` : ''}
-${currentAbout ? `Current About: ${currentAbout}` : ''}
-${targetRole ? `Target Role: ${targetRole}` : ''}`;
+    const prompt = `Optimize this LinkedIn profile. Return JSON with headline, about_section, suggested_skills, improvements.${currentHeadline ? ` Headline: ${currentHeadline}` : ''}${currentAbout ? ` About: ${currentAbout}` : ''}${targetRole ? ` Target: ${targetRole}` : ''}`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',  // Text-only model
+      model: 'gpt-4o-mini',
       messages: [
-        {
-          role: 'system',
-          content: 'You are a LinkedIn optimization expert. Always respond with valid JSON only.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
+        { role: 'system', content: 'You are a LinkedIn optimization expert. Always respond with valid JSON only.' },
+        { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
       max_tokens: 1500,
     });
 
-    const content = completion.choices[0]?.message?.content || '{}';
-    const optimizationData = JSON.parse(content);
+    const optimizationData = JSON.parse(completion.choices[0]?.message?.content || '{}');
 
     return NextResponse.json({
       optimization: {
