@@ -73,13 +73,11 @@ Your Name`,
       },
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Cover letter error:', error);
     return NextResponse.json({
       coverLetter: {
         id: `error-letter-${Date.now()}`,
-        user_id: 'demo-user',
-        resume_id: 'demo-resume',
         job_title: jobTitle,
         company_name: companyName,
         job_description: '',

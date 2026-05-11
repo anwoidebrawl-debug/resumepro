@@ -60,7 +60,7 @@ Currently seeking opportunities to build performant, user-centric applications.`
       },
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('LinkedIn error:', error);
     return NextResponse.json({
       optimization: {

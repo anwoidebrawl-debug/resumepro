@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         analysis: {
           id: `demo-${Date.now()}`,
-          user_id: 'demo-user',
           resume_id: resumeId || 'demo-resume',
           ats_score: Math.floor(Math.random() * 30) + 70,
           keyword_match_score: Math.floor(Math.random() * 30) + 65,
@@ -95,7 +94,6 @@ Resume: ${resumeText}`;
     return NextResponse.json({
       analysis: {
         id: `analysis-${Date.now()}`,
-        user_id: 'demo-user',
         resume_id: resumeId || 'demo-resume',
         ats_score: analysisData.ats_score || 75,
         keyword_match_score: analysisData.keyword_match_score || 70,
@@ -109,13 +107,11 @@ Resume: ${resumeText}`;
       },
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Analysis error:', error);
-    // Return mock data on error instead of failing
     return NextResponse.json({
       analysis: {
         id: `error-${Date.now()}`,
-        user_id: 'demo-user',
         resume_id: 'demo-resume',
         ats_score: 78,
         keyword_match_score: 75,
