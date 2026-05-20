@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # CS 1.6 HLDS Server
+  hlds:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.hlds
+    container_name: neurbot-hlds
+    ports:
+      - "27015:27015/udp"
+      - "27015:27015/tcp"
+    volumes:
+      - /dev/shm:/dev/shm
+      - hlds-data:/opt/hlds
+    restart: unless-stopped
+    networks:
+      - neurbot-net
+
+  # NeurBot Python Engine
+  engine:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.neurbot
+    container_name: neurbot-engine
+    volumes:
+      - /dev/shm:/dev/shm
+      - ./models:/app/models
+    depends_on:
+      - hlds
+    restart: unless-stopped
+    networks:
+      - neurbot-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  # TensorBoard for training monitoring
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    container_name: neurbot-tensorboard
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./models/logs:/logs
+    command: tensorboard --logdir=/logs --bind_all
+    networks:
+      - neurbot-net
+
+volumes:
+  hlds-data:
+
+networks:
+  neurbot-net:
+    driver: bridge
