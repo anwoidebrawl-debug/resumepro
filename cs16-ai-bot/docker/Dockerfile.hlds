@@ -1,0 +1,53 @@
+# CS 1.6 HLDS Server with ReHLDS + ReGameDLL + MetaMod
+#
+# This container runs a headless CS 1.6 dedicated server configured for
+# NeurBot AI development and training.
+
+FROM debian:bullseye-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    lib32gcc-s1 \
+    lib32stdc++6 \
+    wget \
+    ca-certificates \
+    unzip \
+    tar \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create server directory
+WORKDIR /opt/hlds
+
+# Download and install SteamCMD
+RUN mkdir -p /opt/steamcmd && \
+    cd /opt/steamcmd && \
+    wget -q https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz && \
+    tar xzf steamcmd_linux.tar.gz && \
+    rm steamcmd_linux.tar.gz
+
+# Install CS 1.6 HLDS (app 90)
+# Note: This requires Steam credentials in a real deployment
+# For development, you can mount a pre-existing HLDS directory
+RUN echo "Placeholder - mount HLDS installation at /opt/hlds" > /opt/hlds/INSTALL.md
+
+# Server configuration
+COPY configs/server.cfg /opt/hlds/cstrike/server.cfg
+COPY configs/game.cfg /opt/hlds/cstrike/game.cfg
+
+# MetaMod configuration
+RUN mkdir -p /opt/hlds/cstrike/addons/metamod/dlls
+
+# NeurBot plugin
+RUN mkdir -p /opt/hlds/cstrike/addons/neurbot
+
+# Expose server port
+EXPOSE 27015/udp
+EXPOSE 27015/tcp
+
+# Shared memory for IPC
+VOLUME ["/dev/shm"]
+
+# Start server
+ENTRYPOINT ["/opt/hlds/hlds_run"]
+CMD ["-game", "cstrike", "+maxplayers", "12", "+map", "de_dust2", "-port", "27015", "+sv_lan", "1"]

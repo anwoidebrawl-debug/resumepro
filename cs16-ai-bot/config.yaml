@@ -1,0 +1,117 @@
+# NeurBot CS 1.6 Configuration
+
+server:
+  host: "127.0.0.1"
+  port: 27015
+  tickrate: 64
+
+ipc:
+  # Shared memory for game state (low latency)
+  shm_name: "/neurbot_state"
+  shm_size: 65536  # 64KB
+  # Unix socket for control messages
+  socket_path: "/tmp/neurbot.sock"
+  # Maximum response time (ms)
+  max_latency_ms: 15
+
+bot:
+  # Number of bots to spawn
+  count: 5
+  # Default difficulty (0.0 = beginner, 1.0 = expert)
+  difficulty: 0.7
+  # Names for bots
+  names:
+    - "NeurBot_Alpha"
+    - "NeurBot_Beta"
+    - "NeurBot_Gamma"
+    - "NeurBot_Delta"
+    - "NeurBot_Epsilon"
+
+models:
+  # Tactical controller (aim + movement)
+  tactical:
+    architecture: "mlp"  # "mlp" or "transformer"
+    checkpoint: "models/tactical_bc.pt"
+    hidden_dims: [512, 256, 256, 128]
+    input_dim: 157  # computed from state representation
+    action_dim: 12
+    inference_device: "cpu"  # "cpu" or "cuda"
+  
+  # Strategic planner (macro decisions)
+  strategic:
+    architecture: "transformer"
+    checkpoint: "models/strategic.pt"
+    n_layers: 4
+    n_heads: 4
+    d_model: 128
+    context_length: 64
+    inference_device: "cpu"
+
+humanization:
+  enabled: true
+  # Reaction time (ms) - Gaussian distribution
+  reaction_time_mean: 200.0
+  reaction_time_std: 50.0
+  reaction_time_min: 120.0
+  reaction_time_max: 400.0
+  
+  # Aim smoothing
+  aim_smoothing: 0.15  # Bezier curve control (0=instant, 1=very smooth)
+  aim_noise_std: 0.3   # degrees of random aim deviation
+  
+  # Spray control accuracy (0=perfect, 1=no control)
+  spray_inaccuracy: 0.15
+  
+  # Mouse micro-movements when "idle"
+  idle_jitter_enabled: true
+  idle_jitter_amplitude: 0.5  # degrees
+  idle_jitter_frequency: 2.0  # Hz
+  
+  # Occasional mistakes
+  mistake_probability: 0.02  # per decision
+  
+  # Movement imperfection
+  strafe_noise: 0.05  # random deviation in strafe direction
+
+training:
+  # Behavioural cloning
+  bc:
+    learning_rate: 0.0003
+    batch_size: 256
+    epochs: 100
+    weight_decay: 0.0001
+    lr_scheduler: "cosine"
+    warmup_steps: 1000
+  
+  # Reinforcement learning
+  rl:
+    algorithm: "ppo"
+    learning_rate: 0.0001
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_epsilon: 0.2
+    entropy_coef: 0.01
+    value_coef: 0.5
+    max_grad_norm: 0.5
+    n_steps: 2048
+    n_epochs: 10
+    batch_size: 64
+  
+  # Reward shaping
+  rewards:
+    kill: 1.0
+    death: -1.0
+    bomb_plant: 0.5
+    bomb_defuse: 0.5
+    damage_dealt: 0.01  # per HP
+    round_win: 0.2
+    map_control: 0.05
+    idle_penalty: -0.01  # per second standing still
+
+data:
+  demo_dir: "data/demos/"
+  dataset_dir: "data/datasets/"
+  # Target data volume
+  target_hours: 100
+  # State extraction rate (Hz)
+  extraction_rate: 64
